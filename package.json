@@ -1,0 +1,13 @@
+{
+  "name": "rastnegar-rtl-markdown",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "RastNegar - Modern Right-to-Left Markdown Studio & Reader",
+  "dependencies": {
+    "dompurify": "^3.4.15",
+    "html2pdf.js": "^0.14.0",
+    "marked": "^18.0.13",
+    "prismjs": "^1.30.0",
+    "puppeteer-core": "^25.11.0"
+  }
+}

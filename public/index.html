@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl" data-theme="editorial">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  
+  <title>راست‌نگار | استودیو و خوانش‌گر مدرن متون راست‌به‌چپ (مارک‌داون)</title>
+  <meta name="description" content="راست‌نگار: استودیو و ریدر تخصصی، پرمیوم و بدون کلیشه‌های AI برای زبان نشانه‌گذاری مارک‌داون (Markdown) در متون فارسی و راست‌به‌چپ با حل اساسی چالش‌های BiDi. توسعه‌یافته توسط محمد مهدی نصرتی.">
+  <meta name="keywords" content="مارک داون فارسی, RTL Markdown, ویرایشگر مارک داون, خوانش گر مارک داون, محمد مهدی نصرتی, BiDi, Persian Markdown">
+  <meta name="author" content="محمد مهدی نصرتی">
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="راست‌نگار | استودیو و ریدر حرفه‌ای RTL Markdown">
+  <meta property="og:description" content="حل اساسی چالش‌های نگارش و خوانش متون فارسی و راست‌به‌چپ در مارک‌داون با ۵ تم ادیتوریال و بدون کلیشه‌های هوش مصنوعی.">
+  <meta property="og:type" content="website">
+
+  <!-- Favicon SVG -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23A33527'/><text x='50%' y='68%' font-size='60' font-weight='800' fill='white' text-anchor='middle' font-family='sans-serif'>ر</text></svg>">
+
+  <!-- Google Fonts: Vazirmatn & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Vazirmatn:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <!-- Core Stylesheet -->
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <div id="app" class="view-split">
+
+    <!-- ====================================================================
+         1. App Header
+         ==================================================================== -->
+    <header class="app-header">
+      <!-- Right: Brand & Presets -->
+      <div class="header-right">
+        <div class="brand">
+          <div class="brand-icon">ر</div>
+          <div class="brand-text">
+            <span class="brand-title">راست‌نگار</span>
+            <span class="brand-tag">RTL Studio</span>
+          </div>
+        </div>
+
+        <div class="preset-selector-wrapper desktop-only">
+          <select id="preset-selector" class="custom-select header-select" title="انتخاب سند نمونه">
+            <option value="guide">راهنما و BiDi</option>
+            <option value="sliver">مرجع C2</option>
+            <option value="technical">مستند فنی</option>
+            <option value="editorial">تحلیلی</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Center: View Mode Switcher -->
+      <div class="header-center">
+        <!-- Desktop Segmented View Control -->
+        <div class="segmented-control desktop-view-control desktop-only" role="group" aria-label="حالت‌های نمایش">
+          <button type="button" class="segment-btn active" data-view="split" title="نمای دو پنجره‌ای (ویرایشگر + پیش‌نمایش)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+              <line x1="12" y1="3" x2="12" y2="21"></line>
+            </svg>
+            <span class="btn-text">دو پنجره‌ای</span>
+          </button>
+          <button type="button" class="segment-btn" data-view="reader" title="حالت خوانش مقاله‌ای (کتاب‌گونه و بدون حواس‌پرتی)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+              <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+            </svg>
+            <span class="btn-text">خوانش</span>
+          </button>
+          <button type="button" class="segment-btn" data-view="editor" title="فقط ویرایشگر متن">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 20h9"></path>
+              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+            </svg>
+            <span class="btn-text">تحریریه</span>
+          </button>
+        </div>
+
+        <!-- Mobile View Tabs Switcher (Only visible on mobile) -->
+        <div class="mobile-view-tabs mobile-only" role="group">
+          <button type="button" class="mobile-tab-btn active" data-mobile-tab="preview">
+            پیش‌نمایش
+          </button>
+          <button type="button" class="mobile-tab-btn" data-mobile-tab="editor">
+            ویرایشگر
+          </button>
+        </div>
+      </div>
+
+      <!-- Left: Actions & Controls -->
+      <div class="header-left">
+        <!-- Theme Selector Dropdown (Desktop) -->
+        <div class="theme-picker-wrapper desktop-only">
+          <select id="theme-selector" class="custom-select header-select" title="پالت رنگی تم">
+            <option value="editorial">کاغذ و مرکب</option>
+            <option value="obsidian">آبنوس و کهربا</option>
+            <option value="sage">سرو و زیتون</option>
+            <option value="lapis">زعفران و لاجورد</option>
+            <option value="swiss">سوییسی</option>
+          </select>
+        </div>
+
+        <!-- TOC Button -->
+        <button type="button" id="btn-toggle-toc" class="icon-btn" title="فهرست سرفصل‌های سند">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="8" y1="6" x2="21" y2="6"></line>
+            <line x1="8" y1="12" x2="21" y2="12"></line>
+            <line x1="8" y1="18" x2="21" y2="18"></line>
+            <line x1="3" y1="6" x2="3.01" y2="6"></line>
+            <line x1="3" y1="12" x2="3.01" y2="12"></line>
+            <line x1="3" y1="18" x2="3.01" y2="18"></line>
+          </svg>
+          <span class="desktop-only">فهرست</span>
+        </button>
+
+        <!-- Unified Export Dropdown -->
+        <div class="dropdown-wrapper">
+          <button type="button" id="btn-export-dropdown" class="icon-btn" title="خروجی و اشتراک‌گذاری">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            <span>خروجی</span>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="arrow-icon">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </button>
+
+          <!-- Export Dropdown Menu -->
+          <div id="export-menu" class="dropdown-menu">
+            <button type="button" id="btn-export-md" class="menu-item">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+              </svg>
+              <div class="menu-item-text">
+                <strong>دانلود مارک‌داون (.md)</strong>
+                <small>فایل خام برای گیت‌هاب و ذخیره‌سازی</small>
+              </div>
+            </button>
+
+            <button type="button" id="btn-copy-rich" class="menu-item">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="9" y="9" width="13" height="13" rx="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+              <div class="menu-item-text">
+                <strong>کپی متن با فرمت (Rich Text)</strong>
+                <small>آماده چسباندن در تلگرام، ورد و ایمیل</small>
+              </div>
+            </button>
+
+            <button type="button" id="btn-print" class="menu-item">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+                <line x1="12" y1="18" x2="12" y2="12"></line>
+                <polyline points="9 15 12 18 15 15"></polyline>
+              </svg>
+              <div class="menu-item-text">
+                <strong>دانلود مستقیم PDF</strong>
+                <small>تولید آنی و دانلود سند A4 بدون پنجره پرینت</small>
+              </div>
+            </button>
+
+            <button type="button" id="btn-export-html" class="menu-item">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="16 18 22 12 16 6"></polyline>
+                <polyline points="8 6 2 12 8 18"></polyline>
+              </svg>
+              <div class="menu-item-text">
+                <strong>خروجی HTML خودکفا</strong>
+                <small>صفحه مستقل با استایل پایدار و بدون وابستگی</small>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Shortcuts Modal Trigger (Desktop) -->
+        <button type="button" id="btn-shortcuts" class="icon-btn desktop-only" title="کلیدهای میانبر">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+            <path d="M6 8h.01"></path>
+            <path d="M10 8h.01"></path>
+            <path d="M14 8h.01"></path>
+            <path d="M18 8h.01"></path>
+            <path d="M8 12h.01"></path>
+            <path d="M12 12h.01"></path>
+            <path d="M16 12h.01"></path>
+            <path d="M7 16h10"></path>
+          </svg>
+        </button>
+
+        <!-- About Developer Button (Desktop) -->
+        <button type="button" id="btn-about" class="icon-btn primary desktop-only" title="درباره توسعه‌دهنده (محمد مهدی نصرتی)">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          <span>توسعه‌دهنده</span>
+        </button>
+
+        <!-- Mobile Hamburger Menu Button -->
+        <button type="button" id="btn-mobile-menu" class="icon-btn mobile-only" title="منوی امکانات">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- ====================================================================
+         2. Smart Formatting Toolbar
+         ==================================================================== -->
+    <nav class="app-toolbar">
+      <div class="toolbar-scroll-container">
+        <!-- Persian Typography Helpers -->
+        <div class="toolbar-group">
+          <button type="button" class="tool-btn persian-helper" data-action="zwnj" title="درج نیم‌فاصله فارسی (Ctrl+Shift+X یا Shift+Space)">
+            نیم‌فاصله
+          </button>
+          <button type="button" class="tool-btn persian-helper" data-action="quotes" title="درج گیومه فارسی « »">
+            « »
+          </button>
+        </div>
+
+        <div class="toolbar-divider"></div>
+
+        <!-- Headings -->
+        <div class="toolbar-group">
+          <button type="button" class="tool-btn" data-action="h1" title="سرتیتر اصلی (H1)">H1</button>
+          <button type="button" class="tool-btn" data-action="h2" title="سرتیتر بخش (H2)">H2</button>
+          <button type="button" class="tool-btn" data-action="h3" title="زیرعنوان (H3)">H3</button>
+        </div>
+
+        <div class="toolbar-divider"></div>
+
+        <!-- Text Styling -->
+        <div class="toolbar-group">
+          <button type="button" class="tool-btn" data-action="bold" title="متن پررنگ (Ctrl+B)">
+            <strong>B</strong>
+          </button>
+          <button type="button" class="tool-btn" data-action="italic" title="متن کج / مورب (Ctrl+I)">
+            <em>I</em>
+          </button>
+          <button type="button" class="tool-btn" data-action="strike" title="خط‌خورده">
+            <s>S</s>
+          </button>
+        </div>
+
+        <div class="toolbar-divider"></div>
+
+        <!-- Block Elements -->
+        <div class="toolbar-group">
+          <button type="button" class="tool-btn" data-action="quote" title="نقل‌قول راست‌چین">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z"></path>
+              <path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z"></path>
+            </svg>
+          </button>
+          <button type="button" class="tool-btn" data-action="inline-code" title="کد درون‌خطی (محافظت‌شده)">
+            <span style="font-family:var(--font-mono);font-size:0.82rem;">&lt;&gt;</span>
+          </button>
+          <button type="button" class="tool-btn" data-action="codeblock" title="بلوک کد چندخطی LTR">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="16 18 22 12 16 6"></polyline>
+              <polyline points="8 6 2 12 8 18"></polyline>
+            </svg>
+          </button>
+          <button type="button" class="tool-btn" data-action="table" title="درج جدول راست‌چین">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+              <line x1="3" y1="9" x2="21" y2="9"></line>
+              <line x1="3" y1="15" x2="21" y2="15"></line>
+              <line x1="12" y1="3" x2="12" y2="21"></line>
+            </svg>
+          </button>
+          <button type="button" class="tool-btn" data-action="task" title="چک‌لیست کارها">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="9 11 12 14 22 4"></polyline>
+              <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+            </svg>
+          </button>
+          <button type="button" class="tool-btn" data-action="link" title="افزودن پیوند (Ctrl+K)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+            </svg>
+          </button>
+          <button type="button" class="tool-btn" data-action="image" title="درج تصویر">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+              <circle cx="8.5" cy="8.5" r="1.5"></circle>
+              <polyline points="21 15 16 10 5 21"></polyline>
+            </svg>
+          </button>
+          <button type="button" class="tool-btn" data-action="hr" title="خط جداکننده">
+            <span style="font-weight:bold;">—</span>
+          </button>
+        </div>
+
+        <div class="toolbar-divider"></div>
+
+        <!-- Action -->
+        <div class="toolbar-group">
+          <button type="button" class="tool-btn" data-action="clear" title="پاک‌سازی صفحه" style="color:var(--text-muted);">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </nav>
+
+    <!-- ====================================================================
+         3. Workspace Panes
+         ==================================================================== -->
+    <main class="workspace-container">
+      <!-- Editor Pane -->
+      <div id="pane-editor" class="pane pane-editor">
+        <div class="editor-wrapper">
+          <textarea id="markdown-editor" class="editor-textarea" spellcheck="false" placeholder="متن مارک‌داون خود را اینجا بنویسید یا از اسناد نمونه انتخاب کنید..."></textarea>
+        </div>
+      </div>
+
+      <!-- Resizer Gutter (Desktop Only) -->
+      <div id="pane-resizer" class="pane-resizer desktop-only" title="برای تغییر اندازه پنجره‌ها بکشید"></div>
+
+      <!-- Preview Pane -->
+      <div id="pane-preview" class="pane pane-preview">
+        <div id="preview-container" class="preview-scroll">
+          <article id="preview-content" class="preview-inner"></article>
+        </div>
+      </div>
+
+      <!-- Dynamic Table of Contents Drawer -->
+      <aside id="toc-drawer" class="toc-drawer">
+        <div class="drawer-header">
+          <span class="drawer-title">فهرست سرفصل‌های سند</span>
+          <button type="button" id="btn-close-toc" class="btn-close-drawer" title="بستن فهرست">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        </div>
+        <div class="drawer-body">
+          <ul id="toc-list" class="toc-list"></ul>
+        </div>
+      </aside>
+
+      <!-- Mobile Slide-out Menu Drawer -->
+      <aside id="mobile-menu-drawer" class="mobile-menu-drawer">
+        <div class="drawer-header">
+          <span class="drawer-title">تنظیمات و امکانات</span>
+          <button type="button" id="btn-close-mobile-menu" class="btn-close-drawer" title="بستن منو">
+            ✕
+          </button>
+        </div>
+        <div class="drawer-body mobile-menu-body">
+          <!-- Preset selector mobile -->
+          <div class="menu-section">
+            <label class="menu-section-title">انتخاب سند نمونه</label>
+            <select id="preset-selector-mobile" class="custom-select mobile-select">
+              <option value="guide">سند ۱: راهنمای راست‌نگار و حل BiDi</option>
+              <option value="sliver">سند ۲: مرجع جامع Sliver C2</option>
+              <option value="technical">سند ۳: مستند فنی دو زبانه (Python & API)</option>
+              <option value="editorial">سند ۴: یادداشت تحلیلی و مقاله‌ای</option>
+            </select>
+          </div>
+
+          <!-- Theme selector mobile -->
+          <div class="menu-section">
+            <label class="menu-section-title">پالت رنگی تم</label>
+            <select id="theme-selector-mobile" class="custom-select mobile-select">
+              <option value="editorial">کاغذ و مرکب (Ivory & Ink)</option>
+              <option value="obsidian">آبنوس و کهربا (Obsidian Dark)</option>
+              <option value="sage">سرو و زیتون (Nordic Sage)</option>
+              <option value="lapis">زعفران و لاجورد (Persian Lapis)</option>
+              <option value="swiss">مونوکروم سوییسی (Swiss Minimalist)</option>
+            </select>
+          </div>
+
+          <!-- Quick actions -->
+          <div class="menu-section">
+            <label class="menu-section-title">عملیات و راهنما</label>
+            <div class="mobile-menu-actions">
+              <button type="button" id="btn-mobile-export-md" class="mobile-action-row">
+                <span>دانلود مارک‌داون (.md)</span>
+              </button>
+              <button type="button" id="btn-mobile-copy-rich" class="mobile-action-row">
+                <span>کپی متن با فرمت (Rich Text)</span>
+              </button>
+              <button type="button" id="btn-mobile-print" class="mobile-action-row">
+                <span>دانلود مستقیم PDF (بدون پرینت)</span>
+              </button>
+              <button type="button" id="btn-mobile-export-html" class="mobile-action-row">
+                <span>دانلود خروجی HTML خودکفا</span>
+              </button>
+              <button type="button" id="btn-mobile-shortcuts" class="mobile-action-row">
+                <span>راهنمای کلیدهای میانبر</span>
+              </button>
+              <button type="button" id="btn-mobile-about" class="mobile-action-row">
+                <span>درباره ما و توسعه‌دهنده</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Developer card mobile -->
+          <div class="menu-section dev-section-mobile">
+            <div class="dev-profile-mobile">
+              <strong>محمد مهدی نصرتی</strong>
+              <small>توسعه‌دهنده نرم‌افزار</small>
+            </div>
+            <a href="https://t.me/mmn_dev" target="_blank" rel="noopener noreferrer" class="telegram-btn" style="box-sizing:border-box;width:100%;margin-top:0.75rem;padding:0.65rem 0.5rem;font-size:0.82rem;">
+              عضویت در کانال تلگرام (mmn_dev@)
+            </a>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Drawer Backdrop Overlay -->
+      <div id="drawer-backdrop" class="drawer-backdrop"></div>
+    </main>
+
+    <!-- ====================================================================
+         4. Footer Status Bar
+         ==================================================================== -->
+    <footer class="app-footer">
+      <div class="footer-stats">
+        <div class="stat-item">
+          <span>کلمات:</span>
+          <span id="stat-words" class="stat-value">۰</span>
+        </div>
+        <div class="stat-item stat-chars-item">
+          <span>کاراکترها:</span>
+          <span id="stat-chars" class="stat-value">۰</span>
+        </div>
+        <div class="stat-item">
+          <span>زمان خوانش:</span>
+          <span id="stat-time" class="stat-value">۱ دقیقه</span>
+        </div>
+        <div class="stat-item desktop-only">
+          <span id="stat-cursor">خط ۱، ستون ۱</span>
+        </div>
+      </div>
+
+      <div class="footer-credit">
+        <a href="https://t.me/mmn_dev" target="_blank" rel="noopener noreferrer" class="footer-link">
+          <span>طراح:</span>
+          <strong>محمد مهدی نصرتی</strong>
+        </a>
+      </div>
+    </footer>
+
+    <!-- ====================================================================
+         5. Modals
+         ==================================================================== -->
+
+    <!-- About Modal -->
+    <div id="about-modal" class="modal-backdrop">
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <h3 class="modal-title">درباره استودیو «راست‌نگار»</h3>
+          <button type="button" class="btn-close-modal icon-btn" title="بستن">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="developer-card">
+            <div class="dev-profile">
+              <div class="dev-avatar">م</div>
+              <div class="dev-info">
+                <h4>محمد مهدی نصرتی</h4>
+                <p class="dev-role">طراح و توسعه‌دهنده نرم‌افزار</p>
+              </div>
+            </div>
+            
+            <a href="https://t.me/mmn_dev" target="_blank" rel="noopener noreferrer" class="telegram-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 0 0-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/>
+              </svg>
+              عضویت در کانال تلگرام توسعه‌دهنده (mmn_dev@)
+            </a>
+          </div>
+
+          <h5 style="margin: 1rem 0 0.5rem; font-weight:700;">فلسفه و رسالت این پروژه:</h5>
+          <p style="font-size: 0.92rem; line-height: 1.85; color: var(--text-secondary);">
+            یکی از مهم‌ترین چالش‌های جامعه فارسی‌زبان در وب، نبود ابزارهای متناسب با زیبایی‌شناسی خط فارسی و درهم‌ریختگی جملات در هنگام ترکیب با واژگان لاتین و کدهای برنامه‌نویسی در مارک‌داون بوده است.
+          </p>
+          <p style="font-size: 0.92rem; line-height: 1.85; color: var(--text-secondary); margin-top:0.6rem;">
+            با الهام از ایده بنیادین پروژه <code>dariubs/rtlmd</code>، «راست‌نگار» را بازآفرینی کردم تا با بهره‌گیری از الگوریتم تشخیص دوطرفه متن در سطح هر بلوک (Block-level BiDi Detection)، ایزوله‌سازی دقیق کدهای درون‌خطی و ۵ پالت چشم‌نواز بدون کلیشه‌های تکراری هوش مصنوعی، تجربه‌ای روان و پرمیوم برای نویسندگان، تولیدکنندگان محتوا و مهندسان نرم‌افزار خلق کند.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Keyboard Shortcuts Modal -->
+    <div id="shortcuts-modal" class="modal-backdrop">
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <h3 class="modal-title">کلیدهای میانبر راست‌نگار</h3>
+          <button type="button" class="btn-close-modal icon-btn" title="بستن">✕</button>
+        </div>
+        <div class="modal-body">
+          <div class="shortcuts-grid">
+            <div class="shortcut-row">
+              <span>درج نیم‌فاصله فارسی:</span>
+              <kbd class="shortcut-kbd">Shift + Space</kbd>
+            </div>
+            <div class="shortcut-row">
+              <span>درج نیم‌فاصله (ترکیبی):</span>
+              <kbd class="shortcut-kbd">Ctrl + Shift + X</kbd>
+            </div>
+            <div class="shortcut-row">
+              <span>متن پررنگ (Bold):</span>
+              <kbd class="shortcut-kbd">Ctrl + B</kbd>
+            </div>
+            <div class="shortcut-row">
+              <span>متن مورب (Italic):</span>
+              <kbd class="shortcut-kbd">Ctrl + I</kbd>
+            </div>
+            <div class="shortcut-row">
+              <span>درج پیوند (Link):</span>
+              <kbd class="shortcut-kbd">Ctrl + K</kbd>
+            </div>
+            <div class="shortcut-row">
+              <span>ذخیره فوری:</span>
+              <kbd class="shortcut-kbd">Ctrl + S</kbd>
+            </div>
+            <div class="shortcut-row">
+              <span>دانلود مستقیم PDF:</span>
+              <kbd class="shortcut-kbd">Ctrl + P</kbd>
+            </div>
+            <div class="shortcut-row">
+              <span>بستن پنجره‌ها:</span>
+              <kbd class="shortcut-kbd">Escape</kbd>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">پیام سیستم</div>
+
+  </div>
+
+  <!-- Vendor Scripts -->
+  <script src="vendor/marked.min.js"></script>
+  <script src="vendor/purify.min.js"></script>
+  <script src="vendor/prism.min.js"></script>
+  <script src="vendor/prism-components/prism-bash.min.js"></script>
+  <script src="vendor/prism-components/prism-batch.min.js"></script>
+  <script src="vendor/prism-components/prism-powershell.min.js"></script>
+  <script src="vendor/prism-components/prism-yaml.min.js"></script>
+  <script src="vendor/prism-components/prism-json.min.js"></script>
+  <script src="vendor/prism-components/prism-python.min.js"></script>
+  <script src="vendor/prism-components/prism-c.min.js"></script>
+  <script src="vendor/prism-components/prism-cpp.min.js"></script>
+  <script src="vendor/prism-components/prism-go.min.js"></script>
+  <script src="vendor/prism-components/prism-sql.min.js"></script>
+  <script src="vendor/prism-components/prism-docker.min.js"></script>
+  <script src="vendor/prism-components/prism-typescript.min.js"></script>
+  <script src="vendor/prism-components/prism-markdown.min.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <!-- Application Logic -->
+  <script src="js/bidi-engine.js"></script>
+  <script src="js/presets.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+<html dir='rtl'><meta charset='utf-8'><body>
+  <script src='https://cdn.jsdelivr.net/npm/marked/marked.min.js'></script>
+  <script>
+    const m = new marked.Marked();
+    let hasParser = false;
+    m.use({
+      renderer: {
+        paragraph(token) {
+          hasParser = !!this.parser;
+          return '<p>' + (hasParser ? 'YES' : 'NO') + '</p>';
+        }
+      }
+    });
+    document.write(m.parse('test'));
+  </script>
+</body></html>

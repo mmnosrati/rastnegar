@@ -1,0 +1,8 @@
+{
+  "name": "rastnegar",
+  "account_id": "bc7f639ee4d54fcf4435031abe24391e",
+  "compatibility_date": "2026-09-18",
+  "assets": {
+    "directory": "./public"
+  }
+}

@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl" data-theme="editorial">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>سند صادر شده از راست‌نگار (RastNegar)</title>
+  
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/misc/Farsi-Digits/font-face.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap">
+  
+  <style>
+    :root {
+      --font-sans: 'Vazirmatn', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Vazir', Tahoma, Arial, sans-serif;
+      --font-mono: 'JetBrains Mono', 'Vazirmatn', 'Fira Code', Consolas, monospace;
+      --accent: #a33527;
+      --text-primary: #17181c;
+      --text-secondary: #4a4d55;
+      --border-color: #e2ddd5;
+      --bg-code: #f5f2eb;
+      --bg-quote: #f7f4ee;
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      direction: rtl;
+      text-align: right;
+      line-height: 1.9;
+      color: var(--text-primary);
+      background-color: #faf7f2;
+      margin: 0;
+      padding: 2.5rem 1.5rem;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .document-container {
+      max-width: 860px;
+      margin: 0 auto;
+      background: #ffffff;
+      padding: 3rem 3.5rem;
+      border-radius: 14px;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    }
+
+    @media (max-width: 768px) {
+      body { padding: 1rem 0.5rem; }
+      .document-container { padding: 1.75rem 1.25rem; border-radius: 8px; }
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+      font-family: var(--font-sans);
+      font-weight: 800;
+      color: var(--text-primary);
+      line-height: 1.45;
+      margin-top: 2rem;
+      margin-bottom: 0.9rem;
+      letter-spacing: normal !important;
+    }
+
+    h1 {
+      font-size: 2.1rem;
+      border-bottom: 2px solid var(--border-color);
+      padding-bottom: 0.6rem;
+      margin-top: 0.5rem;
+    }
+
+    h2 {
+      font-size: 1.55rem;
+      border-bottom: 1px solid #ebe6dd;
+      padding-bottom: 0.4rem;
+    }
+
+    h3 { font-size: 1.3rem; }
+    h4 { font-size: 1.15rem; }
+
+    p {
+      margin-top: 0;
+      margin-bottom: 1.25rem;
+      line-height: 1.9;
+      text-align: right;
+    }
+
+    p[dir="ltr"], .bidi-block[dir="ltr"] {
+      text-align: left;
+      direction: ltr;
+    }
+
+    p[dir="rtl"], .bidi-block[dir="rtl"] {
+      text-align: right;
+      direction: rtl;
+    }
+
+    [dir="rtl"] { direction: rtl; text-align: right; }
+    [dir="ltr"] { direction: ltr; text-align: left; }
+
+    ul, ol {
+      margin: 1.1rem 0;
+      padding-right: 1.8rem;
+      padding-left: 0;
+    }
+
+    [dir="ltr"] ul, [dir="ltr"] ol {
+      padding-left: 1.8rem;
+      padding-right: 0;
+    }
+
+    li {
+      margin-bottom: 0.5rem;
+      line-height: 1.85;
+    }
+
+    li[dir="rtl"] { direction: rtl; text-align: right; }
+    li[dir="ltr"] { direction: ltr; text-align: left; }
+
+    .inline-code {
+      font-family: var(--font-mono) !important;
+      direction: ltr !important;
+      unicode-bidi: isolate !important;
+      display: inline-block;
+      padding: 0.15em 0.45em;
+      margin: 0 0.15em;
+      background-color: var(--bg-code);
+      border: 1px solid #dfd9ce;
+      border-radius: 4px;
+      font-size: 0.88em;
+      color: #8b1e15;
+    }
+
+    .codeblock-wrapper {
+      margin: 1.6rem 0;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      background-color: var(--bg-code);
+      overflow: hidden;
+      direction: ltr !important;
+      text-align: left !important;
+    }
+
+    .codeblock-header {
+      padding: 0.45rem 1rem;
+      background-color: #ebe6dc;
+      border-bottom: 1px solid var(--border-color);
+      font-family: var(--font-mono);
+      font-size: 0.76rem;
+      color: #555;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+
+    .codeblock-pre {
+      margin: 0;
+      padding: 1.15rem;
+      overflow-x: auto;
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      line-height: 1.7;
+      background-color: var(--bg-code);
+      letter-spacing: normal !important;
+    }
+
+    .codeblock-pre code {
+      font-family: var(--font-mono) !important;
+      letter-spacing: normal !important;
+    }
+
+    blockquote, .bidi-quote {
+      margin: 1.6rem 0;
+      padding: 0.9rem 1.4rem;
+      background-color: var(--bg-quote);
+      border-right: 4px solid var(--accent);
+      border-left: none;
+      border-radius: 4px;
+    }
+
+    blockquote[dir="ltr"], .bidi-quote[dir="ltr"] {
+      border-left: 4px solid var(--accent);
+      border-right: none;
+    }
+
+    blockquote p:last-child, .bidi-quote p:last-child {
+      margin-bottom: 0;
+    }
+
+    .table-responsive {
+      width: 100%;
+      overflow-x: auto;
+      margin: 1.6rem 0;
+    }
+
+    table, .bidi-table {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1px solid var(--border-color);
+      background-color: #ffffff;
+    }
+
+    th, td {
+      padding: 0.75rem 1rem;
+      border: 1px solid var(--border-color);
+      text-align: right;
+    }
+
+    th {
+      background-color: #f0ece3;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    a {
+      color: var(--accent);
+      text-decoration: underline;
+    }
+
+    .token.comment, .token.prolog, .token.doctype, .token.cdata { color: #8a909a; font-style: italic; }
+    .token.punctuation { color: #4e5564; }
+    .token.property, .token.tag, .token.boolean, .token.number, .token.constant, .token.symbol { color: #b83a2a; }
+    .token.selector, .token.attr-name, .token.string, .token.char, .token.builtin { color: #2e7d32; }
+    .token.operator, .token.entity, .token.url { color: #0277bd; }
+    .token.atrule, .token.attr-value, .token.keyword { color: #6a1b9a; font-weight: 600; }
+    .token.function, .token.class-name { color: #1565c0; font-weight: 600; }
+    .token.regex, .token.important, .token.variable { color: #e65100; }
+
+    footer {
+      margin-top: 3.5rem;
+      padding-top: 1.25rem;
+      border-top: 1px solid var(--border-color);
+      font-size: 0.85rem;
+      color: #777;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="document-container">
+    <h1 id="فصل-صفر-مفاهیم-پایه-برای-کسی-که-هیچ-نمیداند" class="content-heading" dir="rtl">
+          <span class="heading-text">فصل صفر: مفاهیم پایه (برای کسی که هیچ نمی‌داند)</span>
+          
+        </h1>
+<h2 id="۰۱-c2-چیست؟" class="content-heading" dir="rtl">
+          <span class="heading-text">۰.۱ C2 چیست؟</span>
+          
+        </h2>
+<p dir="rtl" class="bidi-block"><strong>C2</strong> مخفف <strong>Command and Control</strong> است. تصور کنید شما یک فرمانده هستید و می‌خواهید به یک سرباز در نقطه‌ای دور دستور بدهید. C2 همان سیستم ارتباطی بین شما (فرمانده) و سرباز (کامپیوتر قربانی) است.</p>
+<p dir="rtl" class="bidi-block"><strong>اجزای C2:</strong></p>
+<ul dir="rtl" class="bidi-list">
+<li dir="rtl" class="bidi-list-item"><strong>سرور C2:</strong> کامپیوتر شما (یا VPS) که دستورات را می‌فرستد</li>
+<li dir="rtl" class="bidi-list-item"><strong>Agent / Implant:</strong> برنامه‌ای که روی کامپیوتر قربانی اجرا می‌شود و منتظر دستور شماست</li>
+<li dir="rtl" class="bidi-list-item"><strong>Listener:</strong> پورتی روی سرور شما که منتظر اتصال Agent است</li>
+</ul>
+<div class="codeblock-wrapper" dir="ltr">
+          <div class="codeblock-header">
+            <span class="codeblock-lang">bash</span>
+            
+          </div>
+          <pre class="codeblock-pre language-bash"><code class="language-bash"><span class="token comment"># نصب سرور sliver در لینوکس</span>
+<span class="token function">curl</span> <span class="token parameter variable">-sSfL</span> https://sliver.sh/install <span class="token operator">|</span> <span class="token function">sudo</span> <span class="token function">bash</span>
+sliver-server</code></pre>
+        </div>
+
+    <footer>
+      تولید شده با <a href="https://t.me/mmn_dev" target="_blank" rel="noopener">راست‌نگار (RastNegar)</a> — توسعه‌دهنده: محمد مهدی نصرتی
+    </footer>
+  </div>
+</body>
+</html>
