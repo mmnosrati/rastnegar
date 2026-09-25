@@ -508,49 +508,92 @@
     showToast('در حال آماده‌سازی و دانلود فایل PDF...');
 
     if (window.html2pdf) {
-      // Find external font link to temporarily detach during html2canvas
-      const fontLink = document.querySelector('link[href*="fonts.googleapis.com"]');
-      const parent = fontLink ? fontLink.parentNode : null;
-      const next = fontLink ? fontLink.nextSibling : null;
-
       // Clone preview content
       const clone = DOM.previewInner.cloneNode(true);
       // Remove interactive buttons & anchors
       clone.querySelectorAll('.btn-copy-code, .heading-anchor').forEach(n => n.remove());
 
-      const container = document.createElement('div');
-      container.style.position = 'fixed';
-      container.style.left = '-9999px';
-      container.style.top = '0';
-      container.style.width = '800px';
-      container.style.padding = '24px 30px';
-      container.style.direction = 'rtl';
-      container.style.backgroundColor = '#FFFFFF';
-      container.style.color = '#1C1E21';
-      container.style.fontFamily = "'Vazirmatn', -apple-system, BlinkMacSystemFont, Tahoma, Arial, sans-serif";
-      container.style.lineHeight = '1.85';
-      container.appendChild(clone);
-      document.body.appendChild(container);
+      clone.style.padding = '0';
+      clone.style.margin = '0';
+      clone.style.maxWidth = '100%';
+      clone.style.width = '100%';
 
-      if (fontLink) fontLink.remove();
+      // Ensure normal letter-spacing for all elements so Persian cursive ligatures are preserved
+      clone.querySelectorAll('*').forEach(el => {
+        el.style.letterSpacing = 'normal';
+      });
+
+      // Fix list bullets for PDF export
+      clone.querySelectorAll('ul.bidi-list').forEach(ul => {
+        ul.style.listStyle = 'none';
+        ul.style.paddingRight = '0';
+        ul.style.marginRight = '0';
+        ul.querySelectorAll('li.bidi-list-item').forEach(li => {
+          li.style.listStyle = 'none';
+          li.style.position = 'relative';
+          li.style.paddingRight = '1.6rem';
+          li.style.marginBottom = '0.55rem';
+          
+          const bullet = document.createElement('span');
+          bullet.className = 'pdf-bullet';
+          bullet.textContent = '•';
+          bullet.style.position = 'absolute';
+          bullet.style.right = '0.2rem';
+          bullet.style.top = '0';
+          bullet.style.color = '#a33527';
+          bullet.style.fontSize = '1.3em';
+          bullet.style.lineHeight = '1';
+          bullet.style.fontWeight = 'bold';
+          li.insertBefore(bullet, li.firstChild);
+        });
+      });
+
+      // Fix code blocks font
+      clone.querySelectorAll('.codeblock-pre, .codeblock-pre code').forEach(el => {
+        el.style.fontFamily = "'JetBrains Mono', 'Vazirmatn', monospace";
+        el.style.letterSpacing = 'normal';
+      });
+
+      // High-quality print wrapper appended to body during capture
+      const wrapper = document.createElement('div');
+      wrapper.setAttribute('data-theme', 'editorial');
+      wrapper.style.width = '720px';
+      wrapper.style.padding = '20px 25px';
+      wrapper.style.direction = 'rtl';
+      wrapper.style.textAlign = 'right';
+      wrapper.style.fontFamily = "'Vazirmatn', -apple-system, BlinkMacSystemFont, 'Segoe UI', Tahoma, sans-serif";
+      wrapper.style.backgroundColor = '#ffffff';
+      wrapper.style.color = '#1c1e21';
+      wrapper.style.boxSizing = 'border-box';
+      wrapper.style.letterSpacing = 'normal';
+
+      wrapper.appendChild(clone);
+      document.body.appendChild(wrapper);
 
       const opt = {
-        margin: [12, 10, 12, 10],
+        margin: [15, 12, 15, 12],
         filename: `rastnegar-document-${Date.now()}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 1.8, useCORS: true, logging: false },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        html2canvas: {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: '#ffffff'
+        },
+        jsPDF: {
+          unit: 'mm',
+          format: 'a4',
+          orientation: 'portrait'
+        }
       };
 
       try {
-        await html2pdf().set(opt).from(container).save();
+        await html2pdf().set(opt).from(wrapper).save();
         showToast('فایل PDF با موفقیت دانلود شد.');
       } catch (err) {
         console.error('PDF generation error:', err);
         showToast('خطا در تولید فایل PDF.');
       } finally {
-        container.remove();
-        if (fontLink && parent) parent.insertBefore(fontLink, next);
+        wrapper.remove();
       }
     } else {
       showToast('کتابخانه PDF بارگذاری نشده است.');
