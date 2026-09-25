@@ -27,8 +27,6 @@
     paneEditor: document.getElementById('pane-editor'),
     panePreview: document.getElementById('pane-preview'),
     resizer: document.getElementById('pane-resizer'),
-    presetSelect: document.getElementById('preset-selector'),
-    presetSelectMobile: document.getElementById('preset-selector-mobile'),
     themeSelect: document.getElementById('theme-selector'),
     themeSelectMobile: document.getElementById('theme-selector-mobile'),
     viewButtons: document.querySelectorAll('.segment-btn[data-view]'),
@@ -69,12 +67,23 @@
     setViewMode(state.viewMode);
     setMobileTab(state.mobileTab);
 
-    // 3. Load content from localStorage or default preset
-    const savedContent = localStorage.getItem('rastnegar_content');
+    // 3. Load content from localStorage (auto-purge old C2 or preset content)
+    let savedContent = localStorage.getItem('rastnegar_content');
+    if (savedContent && (
+      savedContent.includes('Sliver C2') ||
+      savedContent.includes('مرجع جامع و کامل Sliver') ||
+      savedContent.includes('C2 چیست') ||
+      savedContent.includes('فصل صفر: مفاهیم پایه') ||
+      savedContent.includes('سند ۱: راهنما')
+    )) {
+      localStorage.removeItem('rastnegar_content');
+      savedContent = null;
+    }
+
     if (savedContent && savedContent.trim().length > 0) {
       state.content = savedContent;
-    } else if (window.RastNegarPresets && window.RastNegarPresets.guide) {
-      state.content = window.RastNegarPresets.guide;
+    } else {
+      state.content = `# به راست‌نگار خوش آمدید\n\nمتن مارک‌داون (Markdown) خود را اینجا بنویسید یا الصاق کنید...\n`;
     }
 
     DOM.editor.value = state.content;
@@ -612,20 +621,6 @@
   }
 
   /**
-   * Load Preset Document Helper
-   */
-  function loadPreset(key) {
-    if (window.RastNegarPresets && window.RastNegarPresets[key]) {
-      if (confirm('آیا مایلید متن پیش‌فرض بارگذاری شود؟ تغییرات فعلی جایگزین خواهند شد.')) {
-        DOM.editor.value = window.RastNegarPresets[key];
-        renderPreview();
-        updateStats();
-        showToast('سند نمونه بارگذاری شد.');
-      }
-    }
-  }
-
-  /**
    * Setup Event Listeners
    */
   function setupEventListeners() {
@@ -658,18 +653,7 @@
     // 4. Resizer
     initResizer();
 
-    // 5. Presets (Desktop & Mobile)
-    if (DOM.presetSelect) {
-      DOM.presetSelect.addEventListener('change', (e) => loadPreset(e.target.value));
-    }
-    if (DOM.presetSelectMobile) {
-      DOM.presetSelectMobile.addEventListener('change', (e) => {
-        loadPreset(e.target.value);
-        closeMobileMenu();
-      });
-    }
-
-    // 6. Themes (Desktop & Mobile)
+    // 5. Themes (Desktop & Mobile)
     if (DOM.themeSelect) {
       DOM.themeSelect.addEventListener('change', (e) => setTheme(e.target.value));
     }
