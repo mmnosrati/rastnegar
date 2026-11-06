@@ -427,7 +427,8 @@
       overflow-x: hidden !important;
       direction: rtl !important;
       text-align: right !important;
-      font-family: 'Vazirmatn', -apple-system, BlinkMacSystemFont, 'Segoe UI', Tahoma, Arial, sans-serif !important;
+      font-family: 'Vazirmatn', -apple-system, BlinkMacSystemFont, 'Segoe UI', Tahoma, 'IRANSans', 'Sahel', 'Samim', 'Shabnam', Arial, sans-serif !important;
+      letter-spacing: normal !important;
       line-height: 1.9 !important;
       margin: 0 !important;
       padding: 0 !important;
@@ -444,6 +445,10 @@
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
       direction: rtl !important;
       text-align: right !important;
+      letter-spacing: normal !important;
+    }
+    .standalone-container * {
+      letter-spacing: normal !important;
     }
     .standalone-container h1,
     .standalone-container h2,
@@ -520,6 +525,27 @@
       تولید شده با <a href="https://t.me/mmn_dev" target="_blank" rel="noopener noreferrer">راست‌نگار</a> — توسعه توسط محمد مهدی نصرتی
     </footer>
   </main>
+  <script>
+    document.addEventListener('click', function(e) {
+      var btn = e.target.closest('.btn-copy-code');
+      if (btn) {
+        var wrapper = btn.closest('.codeblock-wrapper');
+        if (!wrapper) return;
+        var code = wrapper.querySelector('pre code');
+        if (!code) return;
+        navigator.clipboard.writeText(code.innerText || code.textContent).then(function() {
+          var copyText = btn.querySelector('.copy-text');
+          var orig = copyText ? copyText.textContent : 'کپی';
+          if (copyText) copyText.textContent = 'کپی شد!';
+          btn.classList.add('copied');
+          setTimeout(function() {
+            if (copyText) copyText.textContent = orig;
+            btn.classList.remove('copied');
+          }, 2000);
+        });
+      }
+    });
+  </script>
 </body>
 </html>`;
 
@@ -587,6 +613,27 @@
     }
   }
 
+  let cachedFontBase64 = null;
+  async function loadVazirmatnFontBase64() {
+    if (cachedFontBase64) return cachedFontBase64;
+    try {
+      const res = await fetch('fonts/Vazirmatn-Regular.ttf');
+      if (!res.ok) return null;
+      const buffer = await res.arrayBuffer();
+      let binary = '';
+      const bytes = new Uint8Array(buffer);
+      const chunkSize = 8192;
+      for (let i = 0; i < bytes.length; i += chunkSize) {
+        binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
+      }
+      cachedFontBase64 = window.btoa(binary);
+      return cachedFontBase64;
+    } catch (e) {
+      console.warn('Could not preload Vazirmatn font for PDF text embedding:', e);
+      return null;
+    }
+  }
+
   async function printDocument() {
     if (state.isExportingPdf) {
       showToast('تبدیل به PDF هم‌اکنون در حال انجام است...');
@@ -613,8 +660,11 @@
     // Yield to allow browser paint loop to display the loading modal and spinner cleanly before heavy work
     await new Promise(resolve => requestAnimationFrame(() => setTimeout(resolve, 80)));
 
-    let wrapper = null;
+    let holder = null;
     try {
+      // Preload font in parallel
+      const fontBase64Promise = loadVazirmatnFontBase64();
+
       // Clone preview content
       const clone = DOM.previewInner.cloneNode(true);
       // Remove interactive buttons & anchors
@@ -628,6 +678,10 @@
       // Ensure normal letter-spacing for all elements so Persian cursive ligatures are preserved
       clone.querySelectorAll('*').forEach(el => {
         el.style.letterSpacing = 'normal';
+        if (['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'P', 'BLOCKQUOTE', 'TABLE', 'TR', 'PRE'].includes(el.tagName)) {
+          el.style.pageBreakInside = 'avoid';
+          el.style.breakInside = 'avoid';
+        }
       });
 
       // Fix task checkboxes in PDF
@@ -674,14 +728,26 @@
         el.style.letterSpacing = 'normal';
       });
 
-      // High-quality print wrapper appended to body during capture
-      wrapper = document.createElement('div');
+      // Safe hidden holder in document flow
+      holder = document.createElement('div');
+      holder.id = 'rastnegar-pdf-holder';
+      holder.style.position = 'absolute';
+      holder.style.top = '0';
+      holder.style.left = '0';
+      holder.style.width = '800px';
+      holder.style.overflow = 'visible';
+      holder.style.pointerEvents = 'none';
+      holder.style.zIndex = '-9999';
+      holder.style.opacity = '1';
+
+      // High-quality print wrapper appended to holder
+      const wrapper = document.createElement('div');
       wrapper.setAttribute('data-theme', 'editorial');
-      wrapper.style.position = 'fixed';
-      wrapper.style.left = '-9999px';
-      wrapper.style.top = '0';
+      wrapper.style.display = 'block';
+      wrapper.style.position = 'static';
       wrapper.style.width = '750px';
-      wrapper.style.padding = '25px 30px';
+      wrapper.style.margin = '0 auto';
+      wrapper.style.padding = '0';
       wrapper.style.direction = 'rtl';
       wrapper.style.textAlign = 'right';
       wrapper.style.fontFamily = "'Vazirmatn', -apple-system, BlinkMacSystemFont, 'Segoe UI', Tahoma, sans-serif";
@@ -689,24 +755,28 @@
       wrapper.style.color = '#1c1e21';
       wrapper.style.boxSizing = 'border-box';
       wrapper.style.letterSpacing = 'normal';
-      wrapper.style.zIndex = '-1000';
 
       wrapper.appendChild(clone);
-      document.body.appendChild(wrapper);
+      holder.appendChild(wrapper);
+      document.body.appendChild(holder);
 
-      // Adaptive scale: mobile devices use 1.4 for fast, memory-safe rendering; desktop uses 1.8 for crisp vectors
+      // Adaptive scale: mobile devices use 1.5 for fast, memory-safe rendering; desktop uses 1.8 for crisp vectors
       const isMobileDevice = window.innerWidth <= 1024 || ('ontouchstart' in window);
-      const canvasScale = isMobileDevice ? 1.4 : 1.8;
+      const canvasScale = isMobileDevice ? 1.5 : 1.8;
 
       const opt = {
-        margin: [14, 12, 14, 12],
-        filename: `rastnegar-document-${Date.now()}.pdf`,
-        image: { type: 'jpeg', quality: 0.95 },
+        margin: [16, 14, 16, 14],
+        filename: `rastnegar-${Date.now()}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
         html2canvas: {
           scale: canvasScale,
           useCORS: true,
           backgroundColor: '#ffffff',
           logging: false
+        },
+        pagebreak: {
+          mode: ['css', 'legacy'],
+          avoid: ['.table-responsive', 'table', '.codeblock-wrapper', '.bidi-callout', '.bidi-quote', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'tr', '.task-list-item', 'li', 'p']
         },
         jsPDF: {
           unit: 'mm',
@@ -715,19 +785,65 @@
         }
       };
 
-      // Wrap in a 30s timeout watchdog to prevent infinite hang if canvas fails
-      await Promise.race([
-        html2pdf().set(opt).from(wrapper).save(),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('PDF generation timed out')), 30000))
-      ]);
+      const worker = window.html2pdf().set(opt).from(wrapper);
+      const pdf = await worker.toPdf().get('pdf');
 
-      showToast('فایل PDF با موفقیت آماده و دانلود شد.');
+      // Inject TrueType font and invisible selectable text overlay
+      const fontB64 = await fontBase64Promise;
+      if (fontB64 && pdf.addFileToVFS && pdf.addFont) {
+        try {
+          pdf.addFileToVFS('Vazirmatn.ttf', fontB64);
+          pdf.addFont('Vazirmatn.ttf', 'Vazirmatn', 'normal');
+          pdf.setFont('Vazirmatn');
+
+          const numPages = pdf.getNumberOfPages();
+          const wrapperRect = wrapper.getBoundingClientRect();
+          const ptToMm = 0.264583; // 1px ~ 0.264583mm
+          const pageHeightMm = 297;
+          const topMarginMm = 16;
+
+          // Collect text nodes
+          const walker = document.createTreeWalker(wrapper, NodeFilter.SHOW_TEXT, null, false);
+          let n;
+          const textNodes = [];
+          while (n = walker.nextNode()) {
+            const text = n.textContent.trim();
+            if (text.length > 0 && n.parentElement) {
+              const r = n.parentElement.getBoundingClientRect();
+              textNodes.push({
+                text: text,
+                x: (r.left - wrapperRect.left) * ptToMm + 14,
+                y: (r.top - wrapperRect.top) * ptToMm + topMarginMm,
+                fontSize: Math.max(9, parseFloat(window.getComputedStyle(n.parentElement).fontSize || 14) * 0.75)
+              });
+            }
+          }
+
+          textNodes.forEach(item => {
+            const pageIdx = Math.floor(item.y / pageHeightMm) + 1;
+            if (pageIdx <= numPages) {
+              pdf.setPage(pageIdx);
+              const yOnPage = (item.y % pageHeightMm) + 5;
+              pdf.setFontSize(item.fontSize);
+              try {
+                pdf.text(item.text, Math.max(14, item.x), yOnPage, { renderingMode: 3 });
+              } catch (_) {}
+            }
+          });
+        } catch (fontErr) {
+          console.warn('Selectable text overlay notice:', fontErr);
+        }
+      }
+
+      pdf.save(opt.filename);
+
+      showToast('فایل PDF با متن کپی‌پذیر و کیفیت عالی آماده و دانلود شد.');
     } catch (err) {
       console.error('PDF generation error:', err);
       showToast('خطا در تولید فایل PDF. لطفاً مجدداً امتحان کنید.');
     } finally {
-      if (wrapper && wrapper.parentNode) {
-        wrapper.remove();
+      if (holder && holder.parentNode) {
+        holder.remove();
       }
       if (DOM.pdfModal) {
         DOM.pdfModal.classList.remove('active');
@@ -911,7 +1027,7 @@
       }
     });
 
-    // 1.3 Smooth Scrolling for Internal Section Anchors
+    // 1.3 Smooth Scrolling for Internal Section Anchors & Permalinks
     DOM.previewInner.addEventListener('click', (e) => {
       const anchor = e.target.closest('a[href^="#"]');
       if (anchor) {
@@ -922,6 +1038,12 @@
           const targetEl = document.getElementById(targetId);
           if (targetEl) {
             targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            if (anchor.classList.contains('heading-anchor')) {
+              try {
+                navigator.clipboard.writeText(window.location.origin + window.location.pathname + href);
+                showToast('پیوند مستقیم به این بخش در کلیپ‌بورد کپی شد.');
+              } catch (_) {}
+            }
           }
         }
       }
