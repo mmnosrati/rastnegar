@@ -49,7 +49,7 @@
   }
 
   /**
-   * Converts English digits to Persian digits
+   * Converts English digits to Persian digits safely inside plain text
    * @param {string} str 
    * @returns {string}
    */
@@ -57,6 +57,19 @@
     if (!str) return '';
     const persianMap = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
     return str.toString().replace(/\d/g, (d) => persianMap[parseInt(d, 10)]);
+  }
+
+  /**
+   * Safely converts digits to Persian within HTML without mutating HTML tags, attributes, code blocks or SVGs
+   * @param {string} html 
+   * @returns {string}
+   */
+  function toPersianDigitsInHtml(html) {
+    if (!html || typeof html !== 'string') return '';
+    return html.replace(/(<pre[\s\S]*?<\/pre>|<code[\s\S]*?<\/code>|<svg[\s\S]*?<\/svg>|<style[\s\S]*?<\/style>|<script[\s\S]*?<\/script>|<[^>]+>)|([^<]+)/gi, (match, tagOrCode, text) => {
+      if (tagOrCode) return tagOrCode;
+      return toPersianDigits(text);
+    });
   }
 
   /**
@@ -112,6 +125,7 @@
       setTimeout(() => {
         if (copyText) copyText.textContent = originalText;
         btn.classList.remove('copied');
+        if (btn.blur) btn.blur();
       }, 2000);
     }).catch(err => {
       console.error('Failed to copy code: ', err);
@@ -154,17 +168,60 @@
         return `<p dir="${dir}" class="bidi-block">${inlineHtml}</p>\n`;
       },
 
-      // 3. Blockquotes - RTL bordered quote blocks
+      // 3. Blockquotes & Callout Alerts - RTL bordered quote blocks with GitHub/Obsidian Alerts support
       blockquote(token) {
         const text = typeof token === 'object' ? token.text : token;
         const dir = detectBlockDirection(text);
-        const body = (token.tokens && this.parser) ? this.parser.parse(token.tokens) : text;
+        let body = (token.tokens && this.parser) ? this.parser.parse(token.tokens) : text;
+
+        // Check for GitHub / Obsidian Callouts: [!NOTE], [!TIP], [!IMPORTANT], [!WARNING], [!CAUTION]
+        const calloutMatch = body.match(/^\s*<p[^>]*>\s*\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\](?:\s*<br\s*\/?>|\n|\r\n)?\s*([\s\S]*?)<\/p>/i);
+        if (calloutMatch) {
+          const type = calloutMatch[1].toUpperCase();
+          const remainderFirstParagraph = calloutMatch[2].trim();
+          const restOfBody = body.substring(calloutMatch[0].length);
+          const newBody = (remainderFirstParagraph ? `<p dir="${dir}" class="bidi-block">${remainderFirstParagraph}</p>` : '') + restOfBody;
+
+          const calloutMeta = {
+            NOTE: {
+              title: 'یادداشت',
+              icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>'
+            },
+            TIP: {
+              title: 'نکته کاربردی',
+              icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 18h6"></path><path d="M10 22h4"></path><path d="M12 2a7 7 0 0 0-7 7c0 2.5 1.5 4.5 3 6h8c1.5-1.5 3-3.5 3-6a7 7 0 0 0-7-7z"></path></svg>'
+            },
+            IMPORTANT: {
+              title: 'نکته مهم',
+              icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>'
+            },
+            WARNING: {
+              title: 'هشدار',
+              icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>'
+            },
+            CAUTION: {
+              title: 'احتیاط و خطر',
+              icon: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>'
+            }
+          };
+
+          const meta = calloutMeta[type] || calloutMeta.NOTE;
+
+          return `<div class="bidi-callout callout-${type.toLowerCase()}" dir="${dir}">
+            <div class="callout-header">
+              <span class="callout-icon" aria-hidden="true">${meta.icon}</span>
+              <strong class="callout-title">${meta.title}</strong>
+            </div>
+            <div class="callout-body">${newBody}</div>
+          </div>\n`;
+        }
+
         return `<blockquote dir="${dir}" class="bidi-quote">
           <div class="quote-content">${body}</div>
         </blockquote>\n`;
       },
 
-      // 4. List items - Clean task lists & standard lists with RTL bullet alignment
+      // 4. List items - Clean task lists & standard lists with interactive checkboxes & RTL bullet alignment
       listitem(token) {
         const text = typeof token === 'object' ? token.text : token;
         const dir = detectBlockDirection(text);
@@ -180,8 +237,11 @@
 
         if (isTask) {
           return `<li dir="${dir}" class="task-list-item">
-            <span class="task-checkbox ${isChecked ? 'checked' : ''}" aria-hidden="true">${isChecked ? '☑' : '☐'}</span>
-            <span class="task-label">${body}</span>
+            <label class="task-checkbox-label">
+              <input type="checkbox" class="task-checkbox-input" ${isChecked ? 'checked' : ''} aria-label="انتخاب وضعیت تکلیف">
+              <span class="task-custom-box"></span>
+            </label>
+            <span class="task-label ${isChecked ? 'task-checked' : ''}">${body}</span>
           </li>\n`;
         }
         return `<li dir="${dir}" class="bidi-list-item">${body}</li>\n`;
@@ -271,6 +331,30 @@
             <tbody>${bodyRows}</tbody>
           </table>
         </div>\n`;
+      },
+
+      // 8. Links - Non-destructive target="_blank" for external links and smooth internal anchors
+      link(token) {
+        const href = typeof token === 'object' ? token.href : token;
+        const title = (typeof token === 'object' && token.title) ? ` title="${escapeHtml(token.title)}"` : '';
+        const text = typeof token === 'object' ? (token.tokens && this.parser ? this.parser.parseInline(token.tokens) : token.text) : href;
+
+        if (href && href.startsWith('#')) {
+          return `<a href="${escapeHtml(href)}" class="content-link anchor-link"${title}>${text}</a>`;
+        }
+        return `<a href="${escapeHtml(href)}" class="content-link" target="_blank" rel="noopener noreferrer"${title}>${text}</a>`;
+      },
+
+      // 9. Images - Responsive with lazy-loading and figure caption
+      image(token) {
+        const href = typeof token === 'object' ? token.href : token;
+        const title = (typeof token === 'object' && token.title) ? ` title="${escapeHtml(token.title)}"` : '';
+        const text = typeof token === 'object' ? token.text : '';
+        const caption = text ? `<figcaption class="image-caption">${escapeHtml(text)}</figcaption>` : '';
+        return `<figure class="content-image-wrapper">
+          <img src="${escapeHtml(href)}" alt="${escapeHtml(text)}"${title} loading="lazy" class="content-image">
+          ${caption}
+        </figure>`;
       }
     };
 
@@ -287,8 +371,8 @@
 
     const rawHtml = markedInstance.parse(processedText);
     const cleanHtml = window.DOMPurify ? window.DOMPurify.sanitize(rawHtml, {
-      ADD_TAGS: ['bdi', 'wbr'],
-      ADD_ATTR: ['dir', 'target', 'onclick', 'id', 'class', 'style', 'aria-hidden']
+      ADD_TAGS: ['bdi', 'wbr', 'svg', 'circle', 'line', 'path', 'polyline', 'polygon', 'rect', 'input', 'label', 'figure', 'figcaption'],
+      ADD_ATTR: ['dir', 'target', 'rel', 'onclick', 'id', 'class', 'style', 'aria-hidden', 'aria-label', 'type', 'checked', 'data-task-index', 'src', 'alt', 'loading', 'viewBox', 'fill', 'stroke', 'stroke-width', 'stroke-linecap', 'stroke-linejoin', 'd', 'cx', 'cy', 'r', 'x1', 'y1', 'x2', 'y2', 'width', 'height', 'points']
     }) : rawHtml;
 
     return {
@@ -301,6 +385,7 @@
   window.RastNegarBiDi = {
     detectBlockDirection,
     toPersianDigits,
+    toPersianDigitsInHtml,
     toEnglishDigits,
     slugify,
     renderMarkdown,

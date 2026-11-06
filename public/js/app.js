@@ -15,7 +15,8 @@
     mobileTab: 'preview', // 'preview' | 'editor'
     persianDigits: localStorage.getItem('rastnegar_digits') === 'true',
     isSyncScrolling: true,
-    isDraggingResizer: false
+    isDraggingResizer: false,
+    isExportingPdf: false
   };
 
   // DOM Elements
@@ -39,6 +40,10 @@
     btnExportDropdown: document.getElementById('btn-export-dropdown'),
     aboutModal: document.getElementById('about-modal'),
     shortcutsModal: document.getElementById('shortcuts-modal'),
+    pdfModal: document.getElementById('pdf-loading-modal'),
+    btnToggleDigits: document.getElementById('btn-toggle-digits'),
+    btnMobileToggleDigits: document.getElementById('btn-mobile-toggle-digits'),
+    mobileDigitsBadge: document.getElementById('mobile-digits-badge'),
     toast: document.getElementById('toast'),
     // Stats
     statWords: document.getElementById('stat-words'),
@@ -88,11 +93,14 @@
 
     DOM.editor.value = state.content;
 
-    // 4. Initial Render
+    // 4. Initial Digits UI state
+    updateDigitsUI();
+
+    // 5. Initial Render
     renderPreview();
     updateStats();
 
-    // 5. Attach Event Listeners
+    // 6. Attach Event Listeners
     setupEventListeners();
   }
 
@@ -164,8 +172,9 @@
     const result = RastNegarBiDi.renderMarkdown(markdown);
     let finalHtml = result.html;
 
+    // Use safe HTML text converter to preserve HTML tags, code blocks, and SVG properties
     if (state.persianDigits) {
-      finalHtml = RastNegarBiDi.toPersianDigits(finalHtml);
+      finalHtml = RastNegarBiDi.toPersianDigitsInHtml(finalHtml);
     }
 
     DOM.previewInner.innerHTML = finalHtml;
@@ -175,11 +184,46 @@
   const debouncedRender = debounce(renderPreview, 100);
 
   /**
-   * Update Document Statistics
+   * Toggle Persian Digits Display Mode
+   */
+  function togglePersianDigits() {
+    state.persianDigits = !state.persianDigits;
+    try {
+      localStorage.setItem('rastnegar_digits', state.persianDigits ? 'true' : 'false');
+    } catch (_) {}
+    updateDigitsUI();
+    renderPreview();
+    updateStats();
+    showToast(state.persianDigits ? 'ارقام فارسی شدند (۱۲۳).' : 'ارقام انگلیسی شدند (123).');
+  }
+
+  function updateDigitsUI() {
+    if (DOM.btnToggleDigits) {
+      if (state.persianDigits) {
+        DOM.btnToggleDigits.classList.add('active');
+        DOM.btnToggleDigits.style.color = 'var(--accent)';
+      } else {
+        DOM.btnToggleDigits.classList.remove('active');
+        DOM.btnToggleDigits.style.color = '';
+      }
+    }
+    if (DOM.mobileDigitsBadge) {
+      if (state.persianDigits) {
+        DOM.mobileDigitsBadge.textContent = 'فعال';
+        DOM.mobileDigitsBadge.classList.remove('inactive');
+      } else {
+        DOM.mobileDigitsBadge.textContent = 'غیرفعال';
+        DOM.mobileDigitsBadge.classList.add('inactive');
+      }
+    }
+  }
+
+  /**
+   * Update Document Statistics (Persian-aware ZWNJ word counting)
    */
   function updateStats() {
     const text = DOM.editor.value;
-    const words = text.trim() ? (text.trim().match(/[\w\u0600-\u06FF\uFB50-\uFDFF\uFE70-\uFEFF]+/g) || []).length : 0;
+    const words = text.trim() ? (text.trim().match(/[\w\u0600-\u06FF\uFB50-\uFDFF\uFE70-\uFEFF]+(?:[\u200C\u200D][\w\u0600-\u06FF\uFB50-\uFDFF\uFE70-\uFEFF]+)*/g) || []).length : 0;
     const chars = text.length;
     const minutes = Math.max(1, Math.ceil(words / 160));
 
@@ -267,12 +311,10 @@
     isScrollingEditor = true;
 
     const editorScrollTop = DOM.editor.scrollTop;
-    const editorScrollHeight = DOM.editor.scrollHeight - DOM.editor.clientHeight;
-    if (editorScrollHeight > 0) {
-      const scrollRatio = editorScrollTop / editorScrollHeight;
-      const previewScrollHeight = DOM.preview.scrollHeight - DOM.preview.clientHeight;
-      DOM.preview.scrollTop = scrollRatio * previewScrollHeight;
-    }
+    const editorScrollHeight = Math.max(1, DOM.editor.scrollHeight - DOM.editor.clientHeight);
+    const scrollRatio = editorScrollTop / editorScrollHeight;
+    const previewScrollHeight = Math.max(0, DOM.preview.scrollHeight - DOM.preview.clientHeight);
+    DOM.preview.scrollTop = scrollRatio * previewScrollHeight;
 
     setTimeout(() => { isScrollingEditor = false; }, 50);
   }
@@ -282,50 +324,59 @@
     isScrollingPreview = true;
 
     const previewScrollTop = DOM.preview.scrollTop;
-    const previewScrollHeight = DOM.preview.scrollHeight - DOM.preview.clientHeight;
-    if (previewScrollHeight > 0) {
-      const scrollRatio = previewScrollTop / previewScrollHeight;
-      const editorScrollHeight = DOM.editor.scrollHeight - DOM.editor.clientHeight;
-      DOM.editor.scrollTop = scrollRatio * editorScrollHeight;
-    }
+    const previewScrollHeight = Math.max(1, DOM.preview.scrollHeight - DOM.preview.clientHeight);
+    const scrollRatio = previewScrollTop / previewScrollHeight;
+    const editorScrollHeight = Math.max(0, DOM.editor.scrollHeight - DOM.editor.clientHeight);
+    DOM.editor.scrollTop = scrollRatio * editorScrollHeight;
 
     setTimeout(() => { isScrollingPreview = false; }, 50);
   }
 
   /**
-   * Resizable Pane Gutter (Desktop Only)
+   * Resizable Pane Gutter (Desktop and Touch Screens)
    */
   function initResizer() {
     if (!DOM.resizer) return;
 
-    DOM.resizer.addEventListener('mousedown', () => {
+    DOM.resizer.addEventListener('pointerdown', (e) => {
       state.isDraggingResizer = true;
       DOM.resizer.classList.add('dragging');
+      if (DOM.resizer.setPointerCapture) {
+        try { DOM.resizer.setPointerCapture(e.pointerId); } catch (_) {}
+      }
       document.body.style.cursor = 'col-resize';
       document.body.style.userSelect = 'none';
     });
 
-    document.addEventListener('mousemove', (e) => {
+    DOM.resizer.addEventListener('pointermove', (e) => {
       if (!state.isDraggingResizer || state.viewMode !== 'split' || window.innerWidth <= 1024) return;
 
-      const containerWidth = DOM.app.querySelector('.workspace-container').clientWidth;
-      const editorWidth = containerWidth - e.clientX;
-      const previewWidth = e.clientX;
+      const container = DOM.app.querySelector('.workspace-container');
+      if (!container) return;
+      const rect = container.getBoundingClientRect();
+      const pointerOffset = e.clientX - rect.left;
+      const containerWidth = rect.width;
+      const previewWidth = Math.max(220, Math.min(containerWidth - 220, pointerOffset));
+      const editorWidth = containerWidth - previewWidth;
 
-      if (editorWidth > 220 && previewWidth > 220) {
-        DOM.paneEditor.style.flex = `0 0 ${editorWidth}px`;
-        DOM.panePreview.style.flex = `0 0 ${previewWidth}px`;
-      }
+      DOM.paneEditor.style.flex = `0 0 ${editorWidth}px`;
+      DOM.panePreview.style.flex = `0 0 ${previewWidth}px`;
     });
 
-    document.addEventListener('mouseup', () => {
+    const stopDrag = (e) => {
       if (state.isDraggingResizer) {
         state.isDraggingResizer = false;
         DOM.resizer.classList.remove('dragging');
+        if (e && DOM.resizer.releasePointerCapture && e.pointerId) {
+          try { DOM.resizer.releasePointerCapture(e.pointerId); } catch (_) {}
+        }
         document.body.style.cursor = '';
         document.body.style.userSelect = '';
       }
-    });
+    };
+
+    DOM.resizer.addEventListener('pointerup', stopDrag);
+    DOM.resizer.addEventListener('pointercancel', stopDrag);
   }
 
   /**
@@ -420,6 +471,24 @@
       background-color: var(--bg-code, #F2EFE9);
       color: var(--accent, #A33527);
     }
+    .standalone-container .bidi-callout {
+      margin: 1.4rem 0;
+      padding: 0.95rem 1.25rem;
+      border-radius: 10px;
+      border-right: 4.5px solid var(--accent, #a33527);
+      background-color: rgba(163, 53, 39, 0.05);
+    }
+    .standalone-container .bidi-callout[dir="ltr"] {
+      border-left: 4.5px solid var(--accent, #a33527);
+      border-right: none;
+    }
+    .standalone-container .callout-header {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
     .standalone-footer {
       margin-top: 3rem;
       padding-top: 1.25rem;
@@ -471,43 +540,81 @@
   }
 
   async function copyFormattedText() {
-    try {
-      const html = DOM.previewInner.innerHTML;
-      const plain = DOM.previewInner.innerText;
-      
-      const blobHtml = new Blob([html], { type: 'text/html' });
-      const blobPlain = new Blob([plain], { type: 'text/plain' });
+    closeExportMenu();
+    closeMobileMenu();
 
-      if (window.ClipboardItem && navigator.clipboard.write) {
+    const html = DOM.previewInner.innerHTML;
+    const plain = DOM.previewInner.innerText;
+
+    let copied = false;
+    if (window.ClipboardItem && navigator.clipboard && navigator.clipboard.write) {
+      try {
+        const blobHtml = new Blob([html], { type: 'text/html' });
+        const blobPlain = new Blob([plain], { type: 'text/plain' });
         await navigator.clipboard.write([
           new ClipboardItem({
             'text/html': blobHtml,
             'text/plain': blobPlain
           })
         ]);
+        copied = true;
         showToast('متن با فرمت (Rich Text) در کلیپ‌بورد کپی شد.');
-      } else {
-        await navigator.clipboard.writeText(plain);
-        showToast('متن در کلیپ‌بورد کپی شد.');
+      } catch (e) {
+        console.warn('ClipboardItem failed, trying plain text fallback', e);
       }
-    } catch (err) {
-      console.error(err);
-      showToast('خطا در کپی کلیپ‌بورد.');
     }
-    closeExportMenu();
-    closeMobileMenu();
+
+    if (!copied) {
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(plain);
+          showToast('متن در کلیپ‌بورد کپی شد.');
+        } else {
+          const tempArea = document.createElement('textarea');
+          tempArea.value = plain;
+          tempArea.style.position = 'fixed';
+          tempArea.style.left = '-9999px';
+          document.body.appendChild(tempArea);
+          tempArea.select();
+          document.execCommand('copy');
+          tempArea.remove();
+          showToast('متن در کلیپ‌بورد کپی شد.');
+        }
+      } catch (err) {
+        console.error(err);
+        showToast('خطا در دسترسی به کلیپ‌بورد.');
+      }
+    }
   }
 
   async function printDocument() {
+    if (state.isExportingPdf) {
+      showToast('تبدیل به PDF هم‌اکنون در حال انجام است...');
+      return;
+    }
+
     closeExportMenu();
     closeMobileMenu();
     closeToc();
     if (DOM.aboutModal) closeModal(DOM.aboutModal);
     if (DOM.shortcutsModal) closeModal(DOM.shortcutsModal);
 
-    showToast('در حال آماده‌سازی و دانلود فایل PDF...');
+    if (!window.html2pdf) {
+      showToast('کتابخانه ساخت PDF هنوز بارگذاری نشده است.');
+      return;
+    }
 
-    if (window.html2pdf) {
+    state.isExportingPdf = true;
+    if (DOM.pdfModal) {
+      DOM.pdfModal.classList.add('active');
+      DOM.pdfModal.setAttribute('aria-hidden', 'false');
+    }
+
+    // Yield to allow browser paint loop to display the loading modal and spinner cleanly before heavy work
+    await new Promise(resolve => requestAnimationFrame(() => setTimeout(resolve, 80)));
+
+    let wrapper = null;
+    try {
       // Clone preview content
       const clone = DOM.previewInner.cloneNode(true);
       // Remove interactive buttons & anchors
@@ -523,28 +630,41 @@
         el.style.letterSpacing = 'normal';
       });
 
+      // Fix task checkboxes in PDF
+      clone.querySelectorAll('.task-checkbox-input').forEach(input => {
+        const span = document.createElement('span');
+        span.textContent = input.checked ? '☑ ' : '☐ ';
+        span.style.fontSize = '1.1em';
+        span.style.color = input.checked ? '#a33527' : '#888888';
+        if (input.parentNode) {
+          input.parentNode.replaceChild(span, input);
+        }
+      });
+
       // Fix list bullets for PDF export
-      clone.querySelectorAll('ul.bidi-list').forEach(ul => {
+      clone.querySelectorAll('ul.bidi-list, ul').forEach(ul => {
         ul.style.listStyle = 'none';
         ul.style.paddingRight = '0';
         ul.style.marginRight = '0';
-        ul.querySelectorAll('li.bidi-list-item').forEach(li => {
-          li.style.listStyle = 'none';
-          li.style.position = 'relative';
-          li.style.paddingRight = '1.6rem';
-          li.style.marginBottom = '0.55rem';
-          
-          const bullet = document.createElement('span');
-          bullet.className = 'pdf-bullet';
-          bullet.textContent = '•';
-          bullet.style.position = 'absolute';
-          bullet.style.right = '0.2rem';
-          bullet.style.top = '0';
-          bullet.style.color = '#a33527';
-          bullet.style.fontSize = '1.3em';
-          bullet.style.lineHeight = '1';
-          bullet.style.fontWeight = 'bold';
-          li.insertBefore(bullet, li.firstChild);
+        ul.querySelectorAll('li').forEach(li => {
+          if (!li.classList.contains('task-list-item') && !li.querySelector('.pdf-bullet')) {
+            li.style.listStyle = 'none';
+            li.style.position = 'relative';
+            li.style.paddingRight = '1.6rem';
+            li.style.marginBottom = '0.55rem';
+
+            const bullet = document.createElement('span');
+            bullet.className = 'pdf-bullet';
+            bullet.textContent = '•';
+            bullet.style.position = 'absolute';
+            bullet.style.right = '0.2rem';
+            bullet.style.top = '0';
+            bullet.style.color = '#a33527';
+            bullet.style.fontSize = '1.3em';
+            bullet.style.lineHeight = '1';
+            bullet.style.fontWeight = 'bold';
+            li.insertBefore(bullet, li.firstChild);
+          }
         });
       });
 
@@ -555,10 +675,13 @@
       });
 
       // High-quality print wrapper appended to body during capture
-      const wrapper = document.createElement('div');
+      wrapper = document.createElement('div');
       wrapper.setAttribute('data-theme', 'editorial');
-      wrapper.style.width = '720px';
-      wrapper.style.padding = '20px 25px';
+      wrapper.style.position = 'fixed';
+      wrapper.style.left = '-9999px';
+      wrapper.style.top = '0';
+      wrapper.style.width = '750px';
+      wrapper.style.padding = '25px 30px';
       wrapper.style.direction = 'rtl';
       wrapper.style.textAlign = 'right';
       wrapper.style.fontFamily = "'Vazirmatn', -apple-system, BlinkMacSystemFont, 'Segoe UI', Tahoma, sans-serif";
@@ -566,18 +689,24 @@
       wrapper.style.color = '#1c1e21';
       wrapper.style.boxSizing = 'border-box';
       wrapper.style.letterSpacing = 'normal';
+      wrapper.style.zIndex = '-1000';
 
       wrapper.appendChild(clone);
       document.body.appendChild(wrapper);
 
+      // Adaptive scale: mobile devices use 1.4 for fast, memory-safe rendering; desktop uses 1.8 for crisp vectors
+      const isMobileDevice = window.innerWidth <= 1024 || ('ontouchstart' in window);
+      const canvasScale = isMobileDevice ? 1.4 : 1.8;
+
       const opt = {
-        margin: [15, 12, 15, 12],
+        margin: [14, 12, 14, 12],
         filename: `rastnegar-document-${Date.now()}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
+        image: { type: 'jpeg', quality: 0.95 },
         html2canvas: {
-          scale: 2,
+          scale: canvasScale,
           useCORS: true,
-          backgroundColor: '#ffffff'
+          backgroundColor: '#ffffff',
+          logging: false
         },
         jsPDF: {
           unit: 'mm',
@@ -586,17 +715,25 @@
         }
       };
 
-      try {
-        await html2pdf().set(opt).from(wrapper).save();
-        showToast('فایل PDF با موفقیت دانلود شد.');
-      } catch (err) {
-        console.error('PDF generation error:', err);
-        showToast('خطا در تولید فایل PDF.');
-      } finally {
+      // Wrap in a 30s timeout watchdog to prevent infinite hang if canvas fails
+      await Promise.race([
+        html2pdf().set(opt).from(wrapper).save(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('PDF generation timed out')), 30000))
+      ]);
+
+      showToast('فایل PDF با موفقیت آماده و دانلود شد.');
+    } catch (err) {
+      console.error('PDF generation error:', err);
+      showToast('خطا در تولید فایل PDF. لطفاً مجدداً امتحان کنید.');
+    } finally {
+      if (wrapper && wrapper.parentNode) {
         wrapper.remove();
       }
-    } else {
-      showToast('کتابخانه PDF بارگذاری نشده است.');
+      if (DOM.pdfModal) {
+        DOM.pdfModal.classList.remove('active');
+        DOM.pdfModal.setAttribute('aria-hidden', 'true');
+      }
+      state.isExportingPdf = false;
     }
   }
 
@@ -671,6 +808,131 @@
     DOM.editor.addEventListener('input', () => {
       debouncedRender();
       updateStats();
+    });
+
+    // 1.1 Tab Indentation and Markdown Auto-pairing inside editor
+    DOM.editor.addEventListener('keydown', (e) => {
+      // Tab / Shift+Tab Indentation
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        const start = DOM.editor.selectionStart;
+        const end = DOM.editor.selectionEnd;
+        const value = DOM.editor.value;
+
+        if (start === end) {
+          // No selection: Insert 2 spaces
+          if (document.execCommand) {
+            document.execCommand('insertText', false, '  ');
+          } else {
+            DOM.editor.setRangeText('  ', start, end, 'end');
+          }
+        } else {
+          // Multiline selection
+          const lineStart = value.lastIndexOf('\n', start - 1) + 1;
+          const lineEnd = value.indexOf('\n', end);
+          const blockEnd = lineEnd === -1 ? value.length : lineEnd;
+          const lines = value.substring(lineStart, blockEnd).split('\n');
+
+          if (e.shiftKey) {
+            // Outdent
+            const newLines = lines.map(line => line.startsWith('  ') ? line.substring(2) : (line.startsWith(' ') ? line.substring(1) : line));
+            const newText = newLines.join('\n');
+            DOM.editor.setRangeText(newText, lineStart, blockEnd, 'select');
+          } else {
+            // Indent
+            const newLines = lines.map(line => '  ' + line);
+            const newText = newLines.join('\n');
+            DOM.editor.setRangeText(newText, lineStart, blockEnd, 'select');
+          }
+        }
+        renderPreview();
+        updateStats();
+        return;
+      }
+
+      // Markdown auto-pairing when text is selected
+      const pairs = {
+        '*': '*',
+        '`': '`',
+        '[': ']',
+        '(': ')',
+        '{': '}',
+        '«': '»',
+        '"': '"'
+      };
+
+      if (pairs[e.key]) {
+        const start = DOM.editor.selectionStart;
+        const end = DOM.editor.selectionEnd;
+        if (start !== end) {
+          e.preventDefault();
+          const open = e.key;
+          const close = pairs[e.key];
+          const selected = DOM.editor.value.substring(start, end);
+          const wrapped = open + selected + close;
+          if (document.execCommand) {
+            document.execCommand('insertText', false, wrapped);
+          } else {
+            DOM.editor.setRangeText(wrapped, start, end, 'end');
+          }
+          DOM.editor.setSelectionRange(start + open.length, end + open.length);
+          renderPreview();
+          updateStats();
+        }
+      }
+    });
+
+    // 1.2 Interactive Task Checkbox Syncing with Markdown Editor
+    DOM.previewInner.addEventListener('change', (e) => {
+      if (e.target && e.target.classList.contains('task-checkbox-input')) {
+        const checkboxes = Array.from(DOM.previewInner.querySelectorAll('.task-checkbox-input'));
+        const index = checkboxes.indexOf(e.target);
+        if (index === -1) return;
+
+        let currentIndex = 0;
+        let editorText = DOM.editor.value;
+        const taskRegex = /^(\s*[-*+]\s*\[)([ xX])(\]\s*.*)$/gm;
+
+        const updatedText = editorText.replace(taskRegex, (match, prefix, check, suffix) => {
+          if (currentIndex === index) {
+            currentIndex++;
+            const newCheck = e.target.checked ? 'x' : ' ';
+            return `${prefix}${newCheck}${suffix}`;
+          }
+          currentIndex++;
+          return match;
+        });
+
+        if (updatedText !== editorText) {
+          DOM.editor.value = updatedText;
+          renderPreview();
+          updateStats();
+        }
+      }
+    });
+
+    // 1.3 Smooth Scrolling for Internal Section Anchors
+    DOM.previewInner.addEventListener('click', (e) => {
+      const anchor = e.target.closest('a[href^="#"]');
+      if (anchor) {
+        const href = anchor.getAttribute('href');
+        if (href && href.length > 1) {
+          e.preventDefault();
+          const targetId = href.substring(1);
+          const targetEl = document.getElementById(targetId);
+          if (targetEl) {
+            targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }
+      }
+    });
+
+    // 1.4 Mobile History Navigation for Drawers
+    window.addEventListener('popstate', () => {
+      if (DOM.tocDrawer && DOM.tocDrawer.classList.contains('open')) closeToc();
+      if (DOM.mobileMenuDrawer && DOM.mobileMenuDrawer.classList.contains('open')) closeMobileMenu();
+      if (DOM.aboutModal && DOM.aboutModal.classList.contains('active')) closeModal(DOM.aboutModal);
+      if (DOM.shortcutsModal && DOM.shortcutsModal.classList.contains('active')) closeModal(DOM.shortcutsModal);
     });
 
     // 2. Cursor tracking
@@ -851,6 +1113,17 @@
     if (btnHtml) btnHtml.addEventListener('click', exportHtml);
     const btnMobileHtml = document.getElementById('btn-mobile-export-html');
     if (btnMobileHtml) btnMobileHtml.addEventListener('click', exportHtml);
+
+    // 15. Digits Mode Toggles
+    if (DOM.btnToggleDigits) {
+      DOM.btnToggleDigits.addEventListener('click', togglePersianDigits);
+    }
+    if (DOM.btnMobileToggleDigits) {
+      DOM.btnMobileToggleDigits.addEventListener('click', () => {
+        togglePersianDigits();
+        closeMobileMenu();
+      });
+    }
   }
 
   /**
@@ -858,6 +1131,9 @@
    */
   function handleToolbarAction(action) {
     switch (action) {
+      case 'digits':
+        togglePersianDigits();
+        break;
       case 'bold':
         insertFormatting('**', '**', 'متن پررنگ');
         break;

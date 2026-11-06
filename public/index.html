@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
   
   <title>راست‌نگار | استودیو و خوانش‌گر مدرن متون راست‌به‌چپ (مارک‌داون)</title>
   <meta name="description" content="راست‌نگار: استودیو و ریدر تخصصی، پرمیوم و بدون کلیشه‌های AI برای زبان نشانه‌گذاری مارک‌داون (Markdown) در متون فارسی و راست‌به‌چپ با حل اساسی چالش‌های BiDi. توسعه‌یافته توسط محمد مهدی نصرتی.">
@@ -220,6 +220,9 @@
           <button type="button" class="tool-btn persian-helper" data-action="quotes" title="درج گیومه فارسی « »">
             « »
           </button>
+          <button type="button" id="btn-toggle-digits" class="tool-btn persian-helper" data-action="digits" title="تغییر نحوه نمایش ارقام (فارسی / انگلیسی)">
+            ۱۲۳
+          </button>
         </div>
 
         <div class="toolbar-divider"></div>
@@ -367,6 +370,17 @@
               <option value="lapis">زعفران و لاجورد (Persian Lapis)</option>
               <option value="swiss">مونوکروم سوییسی (Swiss Minimalist)</option>
             </select>
+          </div>
+
+          <!-- Quick actions -->
+          <div class="menu-section">
+            <label class="menu-section-title">تنظیمات نگارش و ارقام</label>
+            <div class="mobile-menu-actions">
+              <button type="button" id="btn-mobile-toggle-digits" class="mobile-action-row">
+                <span>نمایش ارقام به فارسی (۱۲۳)</span>
+                <span id="mobile-digits-badge" class="badge-status">فعال</span>
+              </button>
+            </div>
           </div>
 
           <!-- Quick actions -->
@@ -527,6 +541,16 @@
       </div>
     </div>
 
+    <!-- PDF Loading & Rendering Modal -->
+    <div id="pdf-loading-modal" class="pdf-modal-backdrop" aria-hidden="true" role="dialog" aria-modal="true" aria-label="آماده‌سازی فایل PDF">
+      <div class="pdf-modal-card">
+        <div class="pdf-spinner"></div>
+        <h3 class="pdf-modal-title">در حال آماده‌سازی و دانلود فایل PDF</h3>
+        <p class="pdf-modal-desc">لطفاً چند لحظه شکیبا باشید. سند شما با حفظ دقیق چینش راست‌چین، ایزولاسیون BiDi و رزولوشن بالای چاپ در حال تبدیل است...</p>
+        <div class="pdf-progress-bar"><div class="pdf-progress-indicator"></div></div>
+      </div>
+    </div>
+
     <!-- Toast Notification -->
     <div id="toast" class="toast">پیام سیستم</div>
 
@@ -550,7 +574,8 @@
   <script src="vendor/prism-components/prism-typescript.min.js"></script>
   <script src="vendor/prism-components/prism-markdown.min.js"></script>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <!-- Local Standalone html2pdf Bundle -->
+  <script src="vendor/html2pdf.bundle.min.js"></script>
   <!-- Application Logic -->
   <script src="js/bidi-engine.js"></script>
   <script src="js/presets.js"></script>

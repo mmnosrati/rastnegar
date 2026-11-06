@@ -4,7 +4,57 @@
  * Author: Mohammad Mahdi Nosrati (https://t.me/mmn_dev)
  */
 
-/* Google Fonts loaded via link tag in index.html */
+/* ==========================================================================
+   Local Typography & Offline Font Declarations
+   ========================================================================== */
+
+@font-face {
+  font-family: 'Vazirmatn';
+  src: url('../fonts/Vazirmatn-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Vazirmatn';
+  src: url('../fonts/Vazirmatn-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Vazirmatn';
+  src: url('../fonts/Vazirmatn-SemiBold.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Vazirmatn';
+  src: url('../fonts/Vazirmatn-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Vazirmatn';
+  src: url('../fonts/Vazirmatn-ExtraBold.woff2') format('woff2');
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: url('../fonts/JetBrainsMono-Regular.woff2') format('woff2');
+  font-weight: 400 600;
+  font-style: normal;
+  font-display: swap;
+}
 
 /* ==========================================================================
    Design System & Hand-Crafted Themes
@@ -55,6 +105,16 @@
 
   --scrollbar-thumb: #C8C2B3;
   --scrollbar-track: transparent;
+
+  /* Syntax Highlighting Tokens */
+  --token-comment: #6b7280;
+  --token-punct: #4b5563;
+  --token-keyword: #a33527;
+  --token-string: #2d6a4f;
+  --token-func: #1a3478;
+  --token-prop: #c05621;
+  --token-op: #8c2215;
+  --token-var: #b45309;
 }
 
 /* 2. Theme: آبنوس و کهربا (Obsidian & Amber) - Refined Dark */
@@ -87,6 +147,16 @@
 
   --scrollbar-thumb: #3B3F4A;
   --scrollbar-track: transparent;
+
+  /* Syntax Highlighting Tokens */
+  --token-comment: #718096;
+  --token-punct: #a0aec0;
+  --token-keyword: #f08c00;
+  --token-string: #48bb78;
+  --token-func: #63b3ed;
+  --token-prop: #ecc94b;
+  --token-op: #ed8936;
+  --token-var: #f6ad55;
 }
 
 /* 3. Theme: سرو و زیتون (Nordic Sage & Linen) */
@@ -119,6 +189,16 @@
 
   --scrollbar-thumb: #B2C4B2;
   --scrollbar-track: transparent;
+
+  /* Syntax Highlighting Tokens */
+  --token-comment: #556b5b;
+  --token-punct: #334438;
+  --token-keyword: #2d6a4f;
+  --token-string: #1e5c3c;
+  --token-func: #2b4c7e;
+  --token-prop: #b45309;
+  --token-op: #22533d;
+  --token-var: #854d0e;
 }
 
 /* 4. Theme: زعفران و لاجورد (Persian Lapis & Saffron) */
@@ -151,6 +231,16 @@
 
   --scrollbar-thumb: #C5B799;
   --scrollbar-track: transparent;
+
+  /* Syntax Highlighting Tokens */
+  --token-comment: #55667d;
+  --token-punct: #2c394b;
+  --token-keyword: #1a3478;
+  --token-string: #2b7a4b;
+  --token-func: #d97706;
+  --token-prop: #b45309;
+  --token-op: #0e1828;
+  --token-var: #b45309;
 }
 
 /* 5. Theme: مونوکروم سوییسی (Swiss Minimalist Slate) */
@@ -183,6 +273,16 @@
 
   --scrollbar-thumb: #A9B2BE;
   --scrollbar-track: transparent;
+
+  /* Syntax Highlighting Tokens */
+  --token-comment: #6b7280;
+  --token-punct: #374151;
+  --token-keyword: #111827;
+  --token-string: #047857;
+  --token-func: #1d4ed8;
+  --token-prop: #b45309;
+  --token-op: #dc2626;
+  --token-var: #9a3412;
 }
 
 /* ==========================================================================
@@ -237,9 +337,17 @@ html, body {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  width: 100vw;
+  height: 100dvh;
+  width: 100%;
+  max-width: 100vw;
   background-color: var(--bg-app);
   position: relative;
+  overflow: hidden;
+  padding-top: env(safe-area-inset-top, 0);
+  padding-bottom: env(safe-area-inset-bottom, 0);
+  padding-left: env(safe-area-inset-left, 0);
+  padding-right: env(safe-area-inset-right, 0);
+  box-sizing: border-box;
 }
 
 /* --------------------------------------------------------------------------
@@ -941,6 +1049,78 @@ html, body {
 
 .codeblock-pre code {
   font-family: var(--font-mono) !important;
+  color: var(--text-primary);
+  line-height: 1.65;
+  tab-size: 2;
+}
+
+/* ==========================================================================
+   Syntax Highlighting (Prism.js Tokens)
+   ========================================================================== */
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+  color: var(--token-comment);
+  font-style: italic;
+}
+
+.token.punctuation {
+  color: var(--token-punct);
+}
+
+.token.property,
+.token.tag,
+.token.boolean,
+.token.number,
+.token.constant,
+.token.symbol,
+.token.deleted {
+  color: var(--token-prop);
+}
+
+.token.selector,
+.token.attr-name,
+.token.string,
+.token.char,
+.token.builtin,
+.token.inserted {
+  color: var(--token-string);
+}
+
+.token.operator,
+.token.entity,
+.token.url,
+.language-css .token.string,
+.style .token.string {
+  color: var(--token-op);
+}
+
+.token.atrule,
+.token.attr-value,
+.token.keyword {
+  color: var(--token-keyword);
+  font-weight: 600;
+}
+
+.token.function,
+.token.class-name {
+  color: var(--token-func);
+  font-weight: 500;
+}
+
+.token.regex,
+.token.important,
+.token.variable {
+  color: var(--token-var);
+}
+
+.token.important,
+.token.bold {
+  font-weight: bold;
+}
+.token.italic {
+  font-style: italic;
 }
 
 /* Copy Code Button */
@@ -991,6 +1171,140 @@ html, body {
   margin-bottom: 0;
 }
 
+/* ==========================================================================
+   Callout / Alert Blocks (GitHub & Obsidian BiDi Compliant)
+   ========================================================================== */
+.bidi-callout {
+  margin: 1.4rem 0;
+  padding: 0.95rem 1.25rem;
+  border-radius: var(--radius-md);
+  background-color: var(--callout-bg, var(--bg-quote));
+  border-right: 4.5px solid var(--callout-border, var(--accent));
+  border-left: none;
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition-smooth);
+}
+
+.bidi-callout[dir="ltr"] {
+  border-left: 4.5px solid var(--callout-border, var(--accent));
+  border-right: none;
+}
+
+.callout-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.55rem;
+  color: var(--callout-title-color, var(--text-primary));
+}
+
+.callout-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--callout-border, var(--accent));
+  flex-shrink: 0;
+}
+
+.callout-title {
+  font-size: 0.96rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.callout-body {
+  font-size: 0.93rem;
+  line-height: 1.85;
+  color: var(--text-secondary);
+}
+
+.callout-body > *:first-child {
+  margin-top: 0;
+}
+
+.callout-body > *:last-child {
+  margin-bottom: 0;
+}
+
+/* Callout Variants */
+.callout-note {
+  --callout-border: #2563eb;
+  --callout-bg: rgba(37, 99, 235, 0.06);
+  --callout-title-color: #1d4ed8;
+}
+[data-theme="obsidian"] .callout-note {
+  --callout-border: #3b82f6;
+  --callout-bg: rgba(59, 130, 246, 0.1);
+  --callout-title-color: #93c5fd;
+}
+
+.callout-tip {
+  --callout-border: #059669;
+  --callout-bg: rgba(5, 150, 105, 0.06);
+  --callout-title-color: #047857;
+}
+[data-theme="obsidian"] .callout-tip {
+  --callout-border: #10b981;
+  --callout-bg: rgba(16, 185, 129, 0.1);
+  --callout-title-color: #6ee7b7;
+}
+
+.callout-important {
+  --callout-border: #7c3aed;
+  --callout-bg: rgba(124, 58, 237, 0.06);
+  --callout-title-color: #6d28d9;
+}
+[data-theme="obsidian"] .callout-important {
+  --callout-border: #8b5cf6;
+  --callout-bg: rgba(139, 92, 246, 0.1);
+  --callout-title-color: #c4b5fd;
+}
+
+.callout-warning {
+  --callout-border: #d97706;
+  --callout-bg: rgba(217, 119, 6, 0.08);
+  --callout-title-color: #b45309;
+}
+[data-theme="obsidian"] .callout-warning {
+  --callout-border: #f59e0b;
+  --callout-bg: rgba(245, 158, 11, 0.12);
+  --callout-title-color: #fcd34d;
+}
+
+.callout-caution {
+  --callout-border: #dc2626;
+  --callout-bg: rgba(220, 38, 38, 0.07);
+  --callout-title-color: #b91c1c;
+}
+[data-theme="obsidian"] .callout-caution {
+  --callout-border: #ef4444;
+  --callout-bg: rgba(239, 68, 68, 0.12);
+  --callout-title-color: #fca5a5;
+}
+
+/* ==========================================================================
+   Images & Figures
+   ========================================================================== */
+.content-image-wrapper {
+  margin: 1.5rem 0;
+  text-align: center;
+}
+
+.content-image {
+  max-width: 100%;
+  height: auto;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+  display: inline-block;
+}
+
+.image-caption {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin-top: 0.45rem;
+}
+
 /* Lists */
 .preview-inner ul,
 .preview-inner ol {
@@ -1020,41 +1334,60 @@ html, body {
 
 /* Task Checklists */
 .task-list-item {
-  list-style-type: none;
+  list-style-type: none !important;
   position: relative;
   display: flex;
-  align-items: baseline;
-  gap: 0.5rem;
-  margin-bottom: 0.45rem;
+  align-items: flex-start;
+  gap: 0.65rem;
+  margin-bottom: 0.5rem;
+  padding-right: 0 !important;
 }
 
-.task-checkbox {
-  appearance: none;
-  width: 16px;
-  height: 16px;
-  border: 2px solid var(--border-color);
-  border-radius: 3px;
-  outline: none;
-  cursor: default;
-  margin-top: 0.2rem;
-  display: inline-grid;
-  place-content: center;
-  transition: var(--transition-smooth);
+.task-checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  margin-top: 0.22rem;
+  user-select: none;
   flex-shrink: 0;
 }
 
-.task-checkbox:checked {
+.task-checkbox-input {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 17px;
+  height: 17px;
+  border: 2px solid var(--border-color);
+  border-radius: 4px;
+  background-color: var(--bg-surface);
+  cursor: pointer;
+  display: grid;
+  place-content: center;
+  transition: var(--transition-smooth);
+  margin: 0;
+}
+
+.task-checkbox-input:hover {
+  border-color: var(--accent);
+}
+
+.task-checkbox-input:checked {
   background-color: var(--accent);
   border-color: var(--accent);
 }
 
-.task-checkbox:checked::before {
+.task-checkbox-input:checked::before {
   content: "";
   width: 8px;
   height: 4px;
-  border-left: 2px solid var(--accent-contrast);
-  border-bottom: 2px solid var(--accent-contrast);
-  transform: rotate(-45deg) translate(1px, -1px);
+  border-left: 2px solid var(--accent-contrast, #ffffff);
+  border-bottom: 2px solid var(--accent-contrast, #ffffff);
+  transform: rotate(-45deg) translate(0.5px, -0.5px);
+}
+
+.task-label.task-checked {
+  text-decoration: line-through;
+  color: var(--text-muted);
 }
 
 /* Tables */
@@ -1537,6 +1870,111 @@ html, body {
 }
 
 /* ==========================================================================
+   PDF Generation & Progress Modal
+   ========================================================================== */
+.pdf-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.62);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  z-index: 99999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  animation: modalEnter 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.pdf-modal-backdrop.active {
+  display: flex;
+}
+
+.pdf-modal-card {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: 2.2rem 2.4rem;
+  max-width: 440px;
+  width: 100%;
+  text-align: center;
+  direction: rtl;
+  box-sizing: border-box;
+}
+
+.pdf-spinner {
+  width: 44px;
+  height: 44px;
+  border: 3.5px solid var(--border-light);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  margin: 0 auto 1.25rem;
+  animation: pdfSpin 0.75s linear infinite;
+}
+
+@keyframes pdfSpin {
+  to { transform: rotate(360deg); }
+}
+
+.pdf-modal-title {
+  font-size: 1.18rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 0.65rem;
+}
+
+.pdf-modal-desc {
+  font-size: 0.88rem;
+  line-height: 1.8;
+  color: var(--text-secondary);
+  margin-bottom: 1.35rem;
+}
+
+.pdf-progress-bar {
+  height: 6px;
+  background-color: var(--border-light);
+  border-radius: 99px;
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+}
+
+.pdf-progress-indicator {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 99px;
+  width: 45%;
+  animation: pdfIndeterminate 1.5s infinite ease-in-out;
+}
+
+@keyframes pdfIndeterminate {
+  0% { transform: translateX(220%) scaleX(0.2); }
+  50% { transform: translateX(0%) scaleX(1); }
+  100% { transform: translateX(-220%) scaleX(0.2); }
+}
+
+/* Status Badges */
+.badge-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  border-radius: 20px;
+  background-color: var(--accent-light);
+  color: var(--accent);
+  border: 1px solid var(--accent);
+}
+
+.badge-status.inactive {
+  background-color: var(--bg-hover);
+  color: var(--text-muted);
+  border-color: var(--border-color);
+}
+
+/* ==========================================================================
    Print Stylesheet (@media print)
    ========================================================================== */
 @media print {
@@ -1849,12 +2287,14 @@ html, body {
     margin: 0.7rem 0 !important;
   }
 
-  /* Prevent awkward page breaks inside code blocks, blockquotes, and tables */
+  /* Prevent awkward page breaks inside code blocks, blockquotes, callouts, and tables */
   .codeblock-wrapper,
   .bidi-quote,
+  .bidi-callout,
   .bidi-table,
   .table-responsive,
   .task-list-item,
+  .content-image-wrapper,
   tr {
     page-break-inside: avoid !important;
     break-inside: avoid !important;
